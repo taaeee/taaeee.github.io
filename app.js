@@ -43,10 +43,18 @@ function renderTeam(players, containerEl, avgMmrEl) {
     const avatar = clone.querySelector('.player-avatar');
     const name = clone.querySelector('.player-name');
     const mmr = clone.querySelector('.player-mmr');
+    const badge = clone.querySelector('.player-badge');
     
     avatar.src = player.avatarUrl || 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg';
     name.textContent = player.playerName || 'Unknown';
     mmr.textContent = player.mmr || '0';
+
+    // Badge logic
+    const m = Number(player.mmr) || 0;
+    let badgeNum = 1;
+    if (m >= 9000) badgeNum = 9;
+    else if (m >= 2000) badgeNum = Math.floor(m / 1000);
+    badge.src = `https://l4d2center.com/images/badges/${badgeNum}.svg`;
 
     // Staggered animation
     const card = clone.querySelector('.player-card');
@@ -87,7 +95,7 @@ if (!token) {
 } else {
   connectionStatus.textContent = "Conectando a Supabase Realtime...";
   
-   const channel = supabaseClient.channel(`obs_${token}`);
+  const channel = supabaseClient.channel(`obs_${token}`);
   
   channel.on('broadcast', { event: 'match_update' }, ({ payload }) => {
     console.log("Match update received:", payload);
