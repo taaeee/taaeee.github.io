@@ -3,7 +3,7 @@ const SUPABASE_URL = "https://vctxtgacwuprmivvgclw.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_x6a3UfdTi8NpEyqFqhL31A_ZS5RCjfg";
 
 // Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: false }
 });
 
@@ -87,7 +87,7 @@ if (!token) {
 } else {
   connectionStatus.textContent = "Conectando a Supabase Realtime...";
   
-  const channel = supabase.channel(`obs_${token}`);
+   const channel = supabaseClient.channel(`obs_${token}`);
   
   channel.on('broadcast', { event: 'match_update' }, ({ payload }) => {
     console.log("Match update received:", payload);
