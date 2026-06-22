@@ -42,19 +42,23 @@
   <div class="mmr-badge" id="mmrBadge">
     <span class="mmr-text" id="mmrText">---</span>
   </div>
+
   <script>
     // Configuración de Supabase
     const supabaseUrl = 'https://vctxtgacwuprmivvgclw.supabase.co';
     const supabaseKey = 'sb_publishable_x6a3UfdTi8NpEyqFqhL31A_ZS5RCjfg';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
     // Obtener token de la URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
+
     const badge = document.getElementById('mmrBadge');
     const text = document.getElementById('mmrText');
+
     if (token) {
       console.log("Conectando al canal obs_" + token);
-      const channel = supabase.channel(`obs_${token}`);
+      const channel = supabaseClient.channel(`obs_${token}`);
       channel.on('broadcast', { event: 'mmr_update' }, payload => {
         if (payload.payload && payload.payload.mmr) {
           text.textContent = payload.payload.mmr;
