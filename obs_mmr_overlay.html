@@ -60,6 +60,7 @@
       console.log("Conectando al canal obs_" + token);
       const channel = supabaseClient.channel(`obs_${token}`);
       channel.on('broadcast', { event: 'mmr_update' }, payload => {
+        console.log("Recibido evento mmr_update:", payload);
         if (payload.payload && payload.payload.mmr) {
           text.textContent = payload.payload.mmr;
           badge.style.opacity = '1';
