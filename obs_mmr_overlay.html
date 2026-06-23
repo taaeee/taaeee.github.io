@@ -1,78 +1,132 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>L4D2 MMR Badge for OBS</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: transparent; /* transparent for OBS */
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
-      font-family: 'Arial', sans-serif;
-    }
-    .mmr-badge {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: white;
-      font-size: 24px;
-      width: 140px;
-      height: 44px;
-      background: linear-gradient(to right, #3f4c6b 0%, #d5447a 50%, #ea4b7c 50%, #ff5588 100%);
-      clip-path: polygon(0 15%, 50% 0, 100% 15%, 100% 85%, 50% 100%, 0 85%);
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-    .mmr-text {
-      position: relative;
-      z-index: 10;
-      letter-spacing: 2px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    }
-  </style>
-</head>
-<body>
-  <div class="mmr-badge" id="mmrBadge">
-    <span class="mmr-text" id="mmrText">---</span>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>L4D2 MMR Badge for OBS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent; /* transparent for OBS */
+        display: flex;
+        justify-content: center; /* Center horizontally in OBS source */
+        align-items: center; /* Center vertically in OBS source */
+        height: 100vh; /* Fill entire height to center properly */
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
 
-  <script>
-    // Configuración de Supabase
-    const supabaseUrl = 'https://vctxtgacwuprmivvgclw.supabase.co';
-    const supabaseKey = 'sb_publishable_x6a3UfdTi8NpEyqFqhL31A_ZS5RCjfg';
-    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+      .qm-badge {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 20px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        width: 120px;
+        height: 40px;
+        border-radius: 4px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
 
-    // Obtener token de la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+      /* Fallback background colors if image fails to load */
+      .qm-badge--1 {
+        background-color: #555;
+      }
+      .qm-badge--2 {
+        background-color: #666;
+      }
+      .qm-badge--3 {
+        background-color: #777;
+      }
+      .qm-badge--4 {
+        background-color: #888;
+      }
+      .qm-badge--5 {
+        background-color: #ef6c00;
+      }
+      .qm-badge--6 {
+        background-color: #2e7d32;
+      }
+      .qm-badge--7 {
+        background-color: #7b1fa2;
+      }
+      .qm-badge--8 {
+        background-color: #1565c0;
+      }
+      .qm-badge--9 {
+        background-color: #c62828;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="qm-badge" id="mmrBadge">
+      <span id="mmrText">---</span>
+    </div>
 
-    const badge = document.getElementById('mmrBadge');
-    const text = document.getElementById('mmrText');
+    <script>
+      // Obtener parámetros de la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
 
-    if (token) {
-      console.log("Conectando al canal obs_" + token);
-      const channel = supabaseClient.channel(`obs_${token}`);
-      channel.on('broadcast', { event: 'mmr_update' }, payload => {
-        console.log("Recibido evento mmr_update:", payload);
-        if (payload.payload && payload.payload.mmr) {
-          text.textContent = payload.payload.mmr;
-          badge.style.opacity = '1';
-        }
-      }).subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log("Conectado! Esperando MMR...");
-        }
-      });
-    } else {
-      console.error("No se encontró el token en la URL. Asegúrate de añadir ?token=TU_TOKEN al final de la URL en OBS.");
-    }
-  </script>
-</body>
+      const encodedU = urlParams.get("u");
+      const encodedK = urlParams.get("k");
+
+      const badge = document.getElementById("mmrBadge");
+      const text = document.getElementById("mmrText");
+
+      if (token && encodedU && encodedK) {
+        // Decodificamos y conectamos (evitando dejar llaves en texto plano)
+        const supabaseUrl = atob(encodedU);
+        const supabaseKey = atob(encodedK);
+        const supabaseClient = window.supabase.createClient(
+          supabaseUrl,
+          supabaseKey,
+        );
+
+        console.log("Conectando al canal obs_" + token);
+        const channel = supabaseClient.channel(`obs_${token}`);
+        channel
+          .on("broadcast", { event: "mmr_update" }, (payload) => {
+            console.log("Recibido evento mmr_update:", payload);
+            if (payload.payload && payload.payload.mmr) {
+              const mmrStr = payload.payload.mmr;
+              text.textContent = mmrStr;
+
+              // Calcular el número de la medalla (badge 1 al 9) basado en el MMR
+              const m = parseInt(mmrStr, 10) || 0;
+              let badgeNum = Math.floor(m / 1000);
+              if (badgeNum < 1) badgeNum = 1;
+              if (badgeNum > 9) badgeNum = 9;
+
+              // Aplicar clase de color y la imagen de fondo oficial
+              badge.className = `qm-badge qm-badge--${badgeNum}`;
+              badge.style.setProperty(
+                "background-image",
+                `url('https://l4d2center.com/images/badges/${badgeNum}.svg')`,
+                "important",
+              );
+
+              badge.style.opacity = "1";
+            }
+          })
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("Conectado! Esperando MMR...");
+            }
+          });
+      } else {
+        console.error(
+          "Faltan parámetros. Usa el botón de la extensión para copiar la URL completa.",
+        );
+      }
+    </script>
+  </body>
 </html>
