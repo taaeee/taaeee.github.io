@@ -36,9 +36,9 @@
         transition: opacity 0.5s;
       }
 
-      /* Elevamos un poco el texto porque el diseño del SVG de la medalla tiene el listón hacia abajo */
+      /* El texto se centra automáticamente gracias a flexbox y background-size: contain */
       #mmrText {
-        transform: translateY(-2px);
+        /* Eliminamos el translateY (bottom adjust) para centrado natural */
       }
 
       /* Las medallas usan imágenes SVG transparentes, no usamos color de fondo */
