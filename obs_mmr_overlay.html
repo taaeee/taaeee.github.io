@@ -28,12 +28,17 @@
         width: 120px;
         height: 40px;
         border-radius: 4px;
-        background-size: cover;
+        background-size: contain;
         background-position: center;
         background-repeat: no-repeat;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        /* Quitamos el shadow de la caja porque es un SVG transparente */
         opacity: 0;
         transition: opacity 0.5s;
+      }
+
+      /* Elevamos un poco el texto porque el diseño del SVG de la medalla tiene el listón hacia abajo */
+      #mmrText {
+        transform: translateY(-2px);
       }
 
       /* Las medallas usan imágenes SVG transparentes, no usamos color de fondo */
