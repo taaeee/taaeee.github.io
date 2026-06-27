@@ -10,8 +10,10 @@
         padding: 0;
         background: transparent; /* transparent for OBS */
         display: flex;
+        flex-direction: column;
         justify-content: center; /* Center horizontally in OBS source */
         align-items: center; /* Center vertically in OBS source */
+        gap: 6px;
         height: 100vh; /* Fill entire height to center properly */
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
@@ -31,17 +33,67 @@
         background-size: contain;
         background-position: center;
         background-repeat: no-repeat;
-        /* Quitamos el shadow de la caja porque es un SVG transparente */
         opacity: 0;
         transition: opacity 0.5s;
       }
 
-      /* El texto se centra automáticamente gracias a flexbox y background-size: contain */
-      #mmrText {
-        /* Eliminamos el translateY (bottom adjust) para centrado natural */
+      /* Estilo del MMR change debajo de la badge usando diseño de match history */
+      .mh-card__mmr-block {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 3px 12px;
+        border-radius: 9999px;
+        background: rgba(25, 28, 33, 0.95);
+        border: 1px solid #44474f;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transition: opacity 0.5s;
+        box-sizing: border-box;
       }
 
-      /* Las medallas usan imágenes SVG transparentes, no usamos color de fondo */
+      .mh-mmr--up {
+        background: rgba(20, 38, 26, 0.95) !important;
+        border-color: rgba(168, 218, 181, 0.4) !important;
+      }
+
+      .mh-mmr--down {
+        background: rgba(45, 22, 20, 0.95) !important;
+        border-color: rgba(255, 180, 171, 0.4) !important;
+      }
+
+      .mh-card__mmr-icon {
+        font-size: 10px;
+      }
+
+      .mh-mmr--up .mh-card__mmr-icon {
+        color: #a8dab5;
+      }
+
+      .mh-mmr--down .mh-card__mmr-icon {
+        color: #ffb4ab;
+      }
+
+      .mh-card__mmr-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #e1e2e8;
+        letter-spacing: 0.5px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      }
+
+      .mh-mmr--up .mh-card__mmr-value {
+        color: #a8dab5;
+      }
+
+      .mh-mmr--down .mh-card__mmr-value {
+        color: #ffb4ab;
+      }
+
+      #mmrText {
+      }
+
       .qm-badge--1, .qm-badge--2, .qm-badge--3, .qm-badge--4, 
       .qm-badge--5, .qm-badge--6, .qm-badge--7, .qm-badge--8, .qm-badge--9 {
         background-color: transparent;
@@ -52,6 +104,10 @@
     <div class="qm-badge" id="mmrBadge">
       <span id="mmrText">---</span>
     </div>
+    <div class="mh-card__mmr-block" id="mmrChangeBlock">
+      <span class="mh-card__mmr-icon" id="mmrChangeIcon">●</span>
+      <span class="mh-card__mmr-value" id="mmrChangeText">0 MMR</span>
+    </div>
 
     <script>
       // Obtener parámetros de la URL
@@ -60,18 +116,68 @@
 
       const encodedU = urlParams.get("u");
       const encodedK = urlParams.get("k");
+      const steamId = urlParams.get("s");
 
       const badge = document.getElementById("mmrBadge");
       const text = document.getElementById("mmrText");
+      const changeBlock = document.getElementById("mmrChangeBlock");
+      const changeIcon = document.getElementById("mmrChangeIcon");
+      const changeText = document.getElementById("mmrChangeText");
+
+      function updateMmrChange(val) {
+        if (val === undefined || val === null) return;
+        const diff = parseInt(val, 10);
+        if (isNaN(diff)) return;
+
+        let mmrClass = "mh-card__mmr-block";
+        let mmrSign = "";
+        let mmrIcon = "●";
+
+        if (diff > 0) {
+          mmrClass = "mh-card__mmr-block mh-mmr--up";
+          mmrSign = "+";
+          mmrIcon = "▲";
+        } else if (diff < 0) {
+          mmrClass = "mh-card__mmr-block mh-mmr--down";
+          mmrSign = "";
+          mmrIcon = "▼";
+        } else {
+          mmrClass = "mh-card__mmr-block";
+          mmrSign = "";
+          mmrIcon = "●";
+        }
+
+        changeBlock.className = mmrClass;
+        changeIcon.textContent = mmrIcon;
+        changeText.textContent = `${mmrSign}${diff} MMR`;
+        changeBlock.style.display = "flex";
+        setTimeout(() => {
+          changeBlock.style.opacity = "1";
+        }, 10);
+      }
 
       if (token && encodedU && encodedK) {
-        // Decodificamos y conectamos (evitando dejar llaves en texto plano)
         const supabaseUrl = atob(encodedU);
         const supabaseKey = atob(encodedK);
         const supabaseClient = window.supabase.createClient(
           supabaseUrl,
           supabaseKey,
         );
+
+        if (steamId) {
+          supabaseClient
+            .from("match_history")
+            .select("mmr_change")
+            .eq("user_steamid", steamId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+            .then(({ data, error }) => {
+              if (!error && data && data.mmr_change !== undefined && data.mmr_change !== null) {
+                updateMmrChange(data.mmr_change);
+              }
+            });
+        }
 
         console.log("Conectando al canal obs_" + token);
         const channel = supabaseClient.channel(`obs_${token}`);
@@ -82,13 +188,11 @@
               const mmrStr = payload.payload.mmr;
               text.textContent = mmrStr;
 
-              // Calcular el número de la medalla (badge 1 al 9) basado en el MMR
               const m = parseInt(mmrStr, 10) || 0;
               let badgeNum = Math.floor(m / 1000);
               if (badgeNum < 1) badgeNum = 1;
               if (badgeNum > 9) badgeNum = 9;
 
-              // Aplicar clase de color y la imagen de fondo oficial
               badge.className = `qm-badge qm-badge--${badgeNum}`;
               badge.style.setProperty(
                 "background-image",
@@ -98,10 +202,14 @@
 
               badge.style.opacity = "1";
             }
+            if (payload.payload && payload.payload.mmrChange !== undefined && payload.payload.mmrChange !== null) {
+              updateMmrChange(payload.payload.mmrChange);
+            }
           })
           .subscribe((status) => {
             if (status === "SUBSCRIBED") {
               console.log("Conectado! Esperando MMR...");
+              channel.send({ type: "broadcast", event: "request_mmr", payload: {} });
             }
           });
       } else {
